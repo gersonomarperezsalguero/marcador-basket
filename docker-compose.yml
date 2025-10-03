@@ -1,0 +1,47 @@
+version: '3.9'
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver2022
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=TuPassword123!
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ./backendmarcador   # 👈 carpeta de tu backend
+      dockerfile: Dockerfile
+    container_name: backend-marcador
+    ports:
+      - "5071:5071"                # API accesible en localhost:5071
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=MarcadorDB;User Id=sa;Password=TuPassword123!;TrustServerCertificate=True;
+    depends_on:
+      - sqlserver
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend          # 👈 carpeta de tu Angular
+      dockerfile: Dockerfile
+    container_name: frontend-angular
+    ports:
+      - "4200:80"                  # Angular en http://localhost:4200
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+volumes:
+  sql_data:
+
+networks:
+  app-network:
+    driver: bridge
